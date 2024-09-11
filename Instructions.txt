@@ -1,0 +1,13 @@
+How to compile and run:
+
+1. Ensure all the .java and .class files in a single folder. 
+   They are already placed in a single zipped folder so when you unzip it, ensure extracting them all to one folder.
+
+2. Open Terminal/Console/Command Prompt (depending on your OS)
+
+3. Enter javac *.java. 
+   You can skip this step since I have included the class files.
+
+4. Enter java Driver 
+
+5. When the game runs, select a grid size that is based on the name of the grid. There are 3+ options. Take turns with computer to select a square until a winner is announced.  Click on 'play again' to start a new game only after the current game ends. Click "exit" to select a different grid size only after the current game ends.
