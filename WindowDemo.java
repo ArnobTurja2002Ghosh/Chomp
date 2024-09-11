@@ -1,5 +1,8 @@
 import java.awt.*;
 import java.awt.event.*;
+import java.util.Random;
+import java.io.*;
+import java.lang.Thread;
 import javax.swing.*;
 
 /*
@@ -16,11 +19,12 @@ public class WindowDemo extends JFrame implements ActionListener, MouseListener
 	private JLabel instructionLabel;		// a text label to tell the user what to do
 	private JLabel infoLabel, playerLabel;            // a text label to show the coordinate of the selected square
     private JButton topButton;				// a 'reset' button to appear in the top panel
-	private JButton break1;
+	//private JButton break1;
 	private GridSquare [][] gridSquares;	// squares to appear in grid formation in the bottom panel
 	private int rows,columns;				// the size of the grid
 	int player;
 	int[] selected1 = null;
+	String[] players;
 	/*
 	 *  constructor method takes as input how many rows and columns of gridsquares to create
 	 *  it then creates the panels, their subcomponents and puts them all together in the main frame
@@ -31,8 +35,7 @@ public class WindowDemo extends JFrame implements ActionListener, MouseListener
 	{
 		this.rows = rows;
 		this.columns = columns;
-		this.setSize(600,600);
-
+		this.setSize(100*columns,100*rows);
 		
 		// first create the panels
 		topPanel = new JPanel();
@@ -40,32 +43,34 @@ public class WindowDemo extends JFrame implements ActionListener, MouseListener
 		
 		bottomPanel = new JPanel();
 		bottomPanel.setLayout(new GridLayout(rows, columns, 1,1));
-		//bottomPanel.setSize(60,60);
+		//bottomPanel.setBackground(Color.WHITE);
+		//bottomPanel.setSize(100*columns,100*rows);
 		// then create the components for each panel and add them to it
 		
 		// for the top panel:
-		instructionLabel = new JLabel("Click the Squares!");
+		instructionLabel = new JLabel("Click a legal square!");
         infoLabel = new JLabel("No square clicked yet.");
-		topButton = new JButton("Reset");
-		break1=new JButton("Break");
-		playerLabel = new JLabel("Player " + (player+1));
+		topButton = new JButton("play again");
+		//break1=new JButton("Break");
+		players= Math.random() < 0.5 ? new String[]{"user", "computer"}: new String[]{"computer", "user"};
+		playerLabel = new JLabel(players[player] + "'s turn");
 
-		break1.addActionListener(this);
+		//break1.addActionListener(this);
 		topButton.addActionListener(this);			// IMPORTANT! Without this, clicking the square does nothing.
 		
 		topPanel.add(instructionLabel);
-		topPanel.add (topButton);
-		topPanel.add(break1);
+		//topPanel.add (topButton);
+		//topPanel.add(break1);
         topPanel.add(infoLabel);
 		topPanel.add(playerLabel);
 		
 	
 		// for the bottom panel:	
 		// create the squares and add them to the grid
-		gridSquares = new GridSquare[rows][columns];
-		for ( int x = 0; x < columns; x ++)
+		gridSquares = new GridSquare[columns][rows];
+		for ( int y = 0; y < rows; y ++)
 		{
-			for ( int y = 0; y < rows; y ++)
+			for ( int x = 0; x < columns; x ++)
 			{
 				gridSquares[x][y] = new GridSquare(x, y);
 				//gridSquares[x][y].setSize(20, 20);
@@ -93,6 +98,9 @@ public class WindowDemo extends JFrame implements ActionListener, MouseListener
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setResizable(false);
 		setVisible(true);
+		
+		if(players[player].equals("computer")){new Thread(() -> {
+			computer1();}).start();}
 	}
 	
 	
@@ -109,6 +117,7 @@ public class WindowDemo extends JFrame implements ActionListener, MouseListener
 		if ( selected.equals(topButton) )
 		{
 			selected1=null; 
+			infoLabel.setText("No square clicked yet.");
 			for ( int x = 0; x < columns; x ++)
 			{
 				for ( int y = 0; y < rows; y ++)
@@ -120,30 +129,67 @@ public class WindowDemo extends JFrame implements ActionListener, MouseListener
 					}
 				}
 			}
-			player=0;
-			playerLabel.setText("Player " + (player+1));
+			players= Math.random() < 0.5 ? new String[]{"user", "computer"}: new String[]{"computer", "user"};
+			playerLabel.setText(players[player] +"'s turn.");
+			topPanel.remove(topButton);
+			if(players[player].equals("computer")){new Thread(() -> {
+				computer1();}).start();}
+			
 		}
-		else if(selected.equals(break1)){
-			for(int y=this.selected1[1]; y<rows; y++){
-				for ( int x = this.selected1[0]; x < rows; x ++){
-					gridSquares[x][y].setBackground(Color.WHITE);
-				}
-			}
-			player=(player+1)%2;
-			playerLabel.setText("Player " + (player+1));
-			selected1=null;
-			if(gridSquares[1][0].getBackground().equals(Color.WHITE) && gridSquares[0][1].getBackground().equals(Color.WHITE) && gridSquares[1][1].getBackground().equals(Color.WHITE)){
-				playerLabel.setText("Player " + (player+1) + " loses.");
-			}
-		}
+		
 	}
 
 
 	// Mouse Listener events
 	public void mouseClicked(MouseEvent mevt)
 	{
-		// get the object that was selected in the gui
-		Object selected = mevt.getSource();
+		if(selected1 != null){
+			if(break1()==null){
+				new Thread(() -> {
+					computer1();
+				}).start();
+			}
+		}
+	}
+	public String break1(){
+		for(int y=this.selected1[1]; y<rows; y++){
+			for ( int x = this.selected1[0]; x < columns; x ++){
+				gridSquares[x][y].setBackground(Color.WHITE);
+			}
+		}
+		player=(player+1)%2;
+		playerLabel.setText(players[player] + "'s turn.");
+		selected1=null;
+		System.out.println("broken");
+		if(gridSquares[1][0].getBackground().equals(Color.WHITE) && gridSquares[0][1].getBackground().equals(Color.WHITE) && gridSquares[1][1].getBackground().equals(Color.WHITE)){
+			playerLabel.setText(players[player] + " loses. " +players[(player+1)%2]+ " wins.");
+			topPanel.add(topButton);
+			topPanel.remove(instructionLabel);
+			return players[player];
+		}
+		return null;
+	}
+	public void computer1(){
+		int[] selected = new int[]{(int) Math.random()*columns, (int) Math.random()*rows};
+
+		while(!gridSquares[selected[0]][selected[1]].getBackground().equals(new Color(102, 51, 0))){ 
+			selected = new int[]{(int) (Math.random()*columns), (int) (Math.random()*rows)};
+			System.out.println(selected[0]);
+		}
+		selected1=selected;
+		gridSquares[selected1[0]][selected1[1]].setBackground(Color.PINK);
+		try{
+			Thread.sleep(1000);
+			
+		}
+		catch(Exception e){
+			System.out.println(e);
+		}
+		break1();
+	}
+	// not used but must be present to fulfil MouseListener contract
+	public void mouseEntered(MouseEvent arg0){
+		Object selected = arg0.getSource();
 		
 		/*
 		 * I'm using instanceof here so that I can easily cover the selection of any of the gridsquares
@@ -153,7 +199,7 @@ public class WindowDemo extends JFrame implements ActionListener, MouseListener
 		 */
 		
 		// if a gridsquare is selected then switch its color
-		if (selected instanceof GridSquare)
+		if (selected instanceof GridSquare && players[player].equals("user"))
 		{
             GridSquare square = (GridSquare) selected;
 			if(square.getBackground().equals(new Color(102, 51, 0)))
@@ -161,21 +207,15 @@ public class WindowDemo extends JFrame implements ActionListener, MouseListener
 				square.switchColor();
 				int x = square.getXcoord();
 				int y = square.getYcoord();
-				infoLabel.setText("("+x+","+y+") last selected.");
+				infoLabel.setText("("+x+","+y+") selected by user.");
 				if(selected1!=null)
 				{
 					gridSquares[selected1[0]][selected1[1]].setBackground(new Color(102, 51, 0));
 				}
 				selected1= new int[]{x, y}; 
-			}
-			
-            
-            
+			} 
 		}	
 	}
-	
-	// not used but must be present to fulfil MouseListener contract
-	public void mouseEntered(MouseEvent arg0){}
 	public void mouseExited(MouseEvent arg0) {}
 	public void mousePressed(MouseEvent arg0) {}
 	public void mouseReleased(MouseEvent arg0) {}

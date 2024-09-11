@@ -9,6 +9,6 @@ public class Driver
 	public static void main(String[] args)
 	{
 		// create a new GUI window
-		WindowDemo demo = new WindowDemo(10, 10);
+		WindowDemo1 demo = new WindowDemo1();
 	}
 }
